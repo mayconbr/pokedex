@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css">
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script defer src="/script/script.js"></script>
+    <title>Pokedex</title>
+</head>
+<body>
+    <main>
+        <div class="pokeball-background">
+            <img src="images/poke-icon-background.png" alt="Fundo de Pokebola">
+        </div>
+        <div class="cont-search ">
+            <div>
+                <h1 class="tit-pagina">Qual pokemon você esta procurando ?</h1>
+            </div>
+            <div class="input-container">
+                <ion-icon name="search-outline"></ion-icon>
+                <input id="searchPokemon" type="text" class="search-pokemon" placeholder="Pesquisa por pokemon ou numero pokedex">
+            </div>
+        </div>
+        <div class="cont-filter" id="typeFilterContent">
+                <div class="type-filter"">
+                        <select id="typeSelect" onchange="fetchFilteredPokemonIDs()">
+                            <option value=""></option>
+                        </select>                                         
+                </div>
+                <div class="location-filter" onchange="fetchFilteredPokemonIDs()">
+                    <select id="habitatSelect">
+                        <option value=""></option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="cont-card" id="cont-card">
+            
+            <!-- <div id="cardPokemon" class="card-pokemon" onclick="openModal()">
+                <div>
+                    <p id="pokemonName"></p>
+                    <div class="cont-type">      
+                        <span class="card-type" id="primaryType"></span>
+                        <span class="card-type" id="secundarytype" style="display: none;"></span>
+                    </div>
+                </div>
+                <div>
+                    <img  id="pokemonImage" src="#" width="150px" class="pokemon-img">
+                </div>
+            </div> -->
+
+        </div>
+
+    <div class="bt-pag">
+        <button onclick="paginaAnterior()"> ⭠ Anterior</button>
+        <button onclick="proximaPagina()"> Próximo ⭢ </button>
+    </div>
+
+
+    </main>     
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="backgorund-modal" id="ColorModal">
+                <div class="content-info" id="ContentInfo">
+                    <h1 id="namePokemonModal"></h1>
+                    <span class="card-type" id="cardTypeModal"></span>
+                    <span class="number-pokemon" id="numberPokemonModal"></span>
+                </div>
+                <div class="cont-modal-img">
+                    <img  id="pokemonImageModal" src="#" class="pokemon-img-modal">
+                </div>
+            </div>
+            <div class="about-modal">
+                <div class="container-stats">
+                    <h3>Status Base</h3>
+                    <div class="stats"> 
+                        <p></p>
+                    </div>
+                </div>
+                <div class="container-habities">
+                    <h3>Habilidades</h3>
+                    <div>
+                        <p></p>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
