@@ -28,17 +28,22 @@ var closeBtn = document.getElementsByClassName("modalapresentacao-close")[0];
 const limit = 10;
 var offset = 0;
 
-// Chama as funções ao carregar a página
-populateTypeSelect();
-populateHabitatSelect();
-buscarPokemonsPaginados();
+const modalShown = localStorage.getItem('modalPokedexShown');
 
-modalApresentacao.style.display = "block";
+if (!modalShown) {
+    modalApresentacao.style.display = "block"; 
+    localStorage.setItem('modalPokedexShown', 'true'); // Salva a flag no localStorage
+}
 
 if (offset == 0) {
     var btPg = document.getElementById('anterior')
     btPg.style.display = 'none';
 }
+
+// Chama as funções ao carregar a página
+populateTypeSelect();
+populateHabitatSelect();
+buscarPokemonsPaginados();
 
 
 // -------------------------------------- Funções de interação com html
@@ -224,8 +229,8 @@ async function createModal(pokemon) {
 //chama por enter
 document.getElementById('searchPokemon').addEventListener('keydown', function (event) {
     if (event.key === 'Enter' || event.keyCode === 13) {
+        debugger;
         fetchFilteredPokemonIDs();
-        callLoading();
     }
 });
 
@@ -419,13 +424,13 @@ async function fetchFilteredPokemonIDs() {
     // Verifica se pelo menos um filtro ou busca foi fornecido
     if (!query && !typeSelectValue && !habitatSelectValue) {
         alert("Selecione pelo menos um filtro ou insira um termo de busca.");
-        return [];
+        location.reload();
     }
 
     let allPokemons = []; // Para armazenar todos os Pokémon recuperados na busca ou filtro
 
     try {
-        // Requisição de todos os Pokémon se houver uma consulta de texto
+        // Pesquisa de texto
         if (query) {
             const allPokemonData = await AllSeach('pokemon?limit=1000');
             allPokemons = allPokemonData.results.filter(pokemon =>
@@ -487,7 +492,7 @@ async function fetchFilteredPokemonIDs() {
         return pokemonIDs;
 
     } catch (error) {
-        console.error("Erro ao buscar Pokémon pelos filtros:", error);
+        alert.error("Erro ao buscar Pokémon pelos filtros:", error);
         return [];
     }
 }
