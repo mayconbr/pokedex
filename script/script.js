@@ -31,6 +31,11 @@ populateTypeSelect();
 populateHabitatSelect();
 buscarPokemonsPaginados();
 
+if(offset == 0){
+    var btPg = document.getElementById('anterior')
+    btPg.style.display = 'none';
+}
+
 function openModal(pokemon) {
     modal.style.display = "block";
      createModal(pokemon);
@@ -122,11 +127,11 @@ imgElement.alt = `${pokemon} image`
 
 }
 
-//remover função e editar 
+//chama por enter
 document.getElementById('searchPokemon').addEventListener('keydown', function (event) {
-    const pokemon = document.getElementById('searchPokemon').value;
     if (event.key === 'Enter' || event.keyCode === 13) {
-        searchPokemon(pokemon);
+        fetchFilteredPokemonIDs();
+        callLoading();
     }
 });
 
@@ -143,6 +148,7 @@ async function AllSeach(endpoint) {
     return data;
 }
 
+//função antiga de seach
 async function searchPokemon(query) {
     const allPokemons = await AllSeach('pokemon?limit=1000');
     const filteredPokemons = allPokemons.results.filter(pokemon =>
@@ -160,13 +166,6 @@ async function searchPokemon(query) {
     });
 
     buscarPokemonsPorIds(idsSearch);
-
-    // endpoint = 'pokemon'
-    // const data = await PokeApi(endpoint, idsSearch);
-
-    // offset = data.id;
-    // offset = offset - 1;
-    // buscarPokemonsPaginados();
 }
 
 
@@ -250,12 +249,21 @@ async function buscarPokemonsPaginados() {
 
 function paginaAnterior() {
     offset = offset - limit;
+
+    if(offset == 0){
+        var btPg = document.getElementById('anterior')
+        btPg.style.display = 'none';
+    }
+
+    callLoading();
     buscarPokemonsPaginados();
 
 }
 
 function proximaPagina() {
     offset = offset + limit;
+    btPg.style.display = 'block';
+    callLoading();
     buscarPokemonsPaginados();
 }
 
@@ -333,7 +341,7 @@ async function buscarPokemonsPorIds(ids) {
     }
 }
 
-
+//Preenche o select de type
 async function populateTypeSelect() {
     const typeSelect = document.getElementById("typeSelect");
     typeSelect.innerHTML = '<option value="">Tipos</option>';
@@ -362,19 +370,30 @@ async function populateHabitatSelect() {
 }
 
 async function fetchFilteredPokemonIDs() {
+
+    callLoading();
+
+    const query = document.getElementById('searchPokemon').value.toLowerCase(); // Captura o valor do campo de busca
     const typeSelectValue = document.getElementById('typeSelect').value;
     const habitatSelectValue = document.getElementById('habitatSelect').value;
 
-    // Verifica se pelo menos um filtro foi selecionado
-    if (!typeSelectValue && !habitatSelectValue) {
-        console.warn("Selecione pelo menos um filtro: tipo ou habitat.");
+    // Verifica se pelo menos um filtro ou busca foi fornecido
+    if (!query && !typeSelectValue && !habitatSelectValue) {
+        alert("Selecione pelo menos um filtro ou insira um termo de busca.");
         return [];
     }
 
-    let pokemonByType = [];
-    let pokemonByHabitat = [];
+    let allPokemons = []; // Para armazenar todos os Pokémon recuperados na busca ou filtro
 
     try {
+        // Requisição de todos os Pokémon se houver uma consulta de texto
+        if (query) {
+            const allPokemonData = await AllSeach('pokemon?limit=1000');
+            allPokemons = allPokemonData.results.filter(pokemon =>
+                pokemon.name.includes(query) // Filtra pokémons pelo termo da pesquisa
+            );
+        }
+
         // Requisição para o filtro de tipo (se um valor foi selecionado)
         if (typeSelectValue) {
             const typeResponse = await fetch(`https://pokeapi.co/api/v2/type/${typeSelectValue}`);
@@ -382,7 +401,16 @@ async function fetchFilteredPokemonIDs() {
                 throw new Error(`Erro ao buscar tipo: ${typeResponse.statusText}`);
             }
             const typeData = await typeResponse.json();
-            pokemonByType = typeData.pokemon.map(pokemonEntry => pokemonEntry.pokemon);
+            const pokemonByType = typeData.pokemon.map(pokemonEntry => pokemonEntry.pokemon);
+            
+            // Se há uma pesquisa de texto, mantemos apenas os Pokémon que coincidem com ambos
+            if (query) {
+                allPokemons = allPokemons.filter(pokemon =>
+                    pokemonByType.some(pokemonType => pokemonType.name === pokemon.name)
+                );
+            } else {
+                allPokemons = pokemonByType;
+            }
         }
 
         // Requisição para o filtro de habitat (se um valor foi selecionado)
@@ -392,34 +420,71 @@ async function fetchFilteredPokemonIDs() {
                 throw new Error(`Erro ao buscar habitat: ${habitatResponse.statusText}`);
             }
             const habitatData = await habitatResponse.json();
-            pokemonByHabitat = habitatData.pokemon_species;
+            const pokemonByHabitat = habitatData.pokemon_species;
+
+            // Se já há pokémons de pesquisa ou filtro de tipo, mantemos apenas os comuns
+            if (query || typeSelectValue) {
+                allPokemons = allPokemons.filter(pokemon =>
+                    pokemonByHabitat.some(pokemonHabitat => pokemonHabitat.name === pokemon.name)
+                );
+            } else {
+                allPokemons = pokemonByHabitat;
+            }
         }
 
-        // Filtra Pokémon com base em ambos os filtros, ou apenas um, conforme selecionado
-        let filteredPokemons;
-        if (typeSelectValue && habitatSelectValue) {
-            filteredPokemons = pokemonByType.filter(pokemonType =>
-                pokemonByHabitat.some(pokemonHabitat => pokemonHabitat.name === pokemonType.name)
-            );
-        } else {
-            filteredPokemons = typeSelectValue ? pokemonByType : pokemonByHabitat;
-        }
-
-        // Extrai os IDs dos Pokémon que passaram nos filtros e retorna como array
-        const pokemonIDs = filteredPokemons.map(pokemon => {
+        // Extrai os IDs dos Pokémon filtrados e retorna como array
+        const pokemonIDs = allPokemons.map(pokemon => {
             const urlParts = pokemon.url.split('/');
             return urlParts[urlParts.length - 2]; // ID do Pokémon na URL
         });
 
         console.log("Pokémon IDs filtrados:", pokemonIDs);
 
-        buscarPokemonsPorIds(pokemonIDs);
+        buscarPokemonsPorIds(pokemonIDs); // Chama a função para processar os IDs dos Pokémon encontrados
 
+         var btPag = document.getElementById("btPag");
+         btPag.style.display = 'none';
 
         return pokemonIDs;
+
     } catch (error) {
         console.error("Erro ao buscar Pokémon pelos filtros:", error);
         return [];
     }
 }
 
+
+
+var modalApresentacao = document.getElementById("modalApresentacao");
+modalApresentacao.style.display = "block";
+    var closeBtn = document.getElementsByClassName("modalapresentacao-close")[0];
+
+    closeBtn.onclick = function() {
+        modalApresentacao.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modalApresentacao.style.display = "none";
+      }
+    }
+
+
+
+    function loading() {
+        const loadingScreen = document.getElementById("loading-screen");
+
+        if (loadingScreen.classList.contains("hidden")) {
+            loadingScreen.classList.remove("hidden");
+        } else {
+            loadingScreen.classList.add("hidden");
+        }
+    }
+
+    function callLoading() {
+        loading();
+    
+        setTimeout(() => {
+            loading();
+        }, 1000);
+    }
