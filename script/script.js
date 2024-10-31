@@ -388,7 +388,6 @@ async function buscarPokemonsPorIds(ids) {
                 contType.appendChild(secondaryType);
             }
 
-            // Imagem do Pokémon
             const imgContainer = document.createElement("div");
             const imagemElemento = document.createElement("img");
             imagemElemento.setAttribute("id", `pokemonImage-${nome}`);
@@ -417,17 +416,17 @@ async function fetchFilteredPokemonIDs() {
 
     callLoading();
 
-    const query = document.getElementById('searchPokemon').value.toLowerCase(); // Captura o valor do campo de busca
+    const query = document.getElementById('searchPokemon').value.toLowerCase();
     const typeSelectValue = document.getElementById('typeSelect').value;
     const habitatSelectValue = document.getElementById('habitatSelect').value;
 
     // Verifica se pelo menos um filtro ou busca foi fornecido
     if (!query && !typeSelectValue && !habitatSelectValue) {
         alert("Selecione pelo menos um filtro ou insira um termo de busca.");
-        location.reload();
+        return;
     }
 
-    let allPokemons = []; // Para armazenar todos os Pokémon recuperados na busca ou filtro
+    let allPokemons = []; // Reinicia a lista 
 
     try {
         // Pesquisa de texto
@@ -447,7 +446,7 @@ async function fetchFilteredPokemonIDs() {
             const typeData = await typeResponse.json();
             const pokemonByType = typeData.pokemon.map(pokemonEntry => pokemonEntry.pokemon);
 
-            // Se há uma pesquisa de texto, mantemos apenas os Pokémon que coincidem com ambos
+            // Se há uma pesquisa de texto, mantemos  Pokémon que coincidem c
             if (query) {
                 allPokemons = allPokemons.filter(pokemon =>
                     pokemonByType.some(pokemonType => pokemonType.name === pokemon.name)
@@ -466,7 +465,7 @@ async function fetchFilteredPokemonIDs() {
             const habitatData = await habitatResponse.json();
             const pokemonByHabitat = habitatData.pokemon_species;
 
-            // Se já há pokémons de pesquisa ou filtro de tipo, mantemos apenas os comuns
+            // Se há mantem
             if (query || typeSelectValue) {
                 allPokemons = allPokemons.filter(pokemon =>
                     pokemonByHabitat.some(pokemonHabitat => pokemonHabitat.name === pokemon.name)
@@ -476,23 +475,30 @@ async function fetchFilteredPokemonIDs() {
             }
         }
 
-        // Extrai os IDs dos Pokémon filtrados e retorna como array
+        // retorna os id como array
         const pokemonIDs = allPokemons.map(pokemon => {
             const urlParts = pokemon.url.split('/');
-            return urlParts[urlParts.length - 2]; // ID do Pokémon na URL
+            return urlParts[urlParts.length - 2];
         });
 
         console.log("Pokémon IDs filtrados:", pokemonIDs);
 
-        buscarPokemonsPorIds(pokemonIDs); // Chama a função para processar os IDs dos Pokémon encontrados
+        buscarPokemonsPorIds(pokemonIDs); // Funcao para processar os ids
 
         var btPag = document.getElementById("btPag");
         btPag.style.display = 'none';
 
+        // Limpa os filtros após a busca
+        document.getElementById('searchPokemon').value = '';
+        document.getElementById('typeSelect').value = '';
+        document.getElementById('habitatSelect').value = '';
+
         return pokemonIDs;
 
     } catch (error) {
-        alert.error("Erro ao buscar Pokémon pelos filtros:", error);
+        console.error("Erro ao buscar Pokémon pelos filtros:", error);
+        alert("Erro ao buscar Pokémon pelos filtros. Tente novamente.");
         return [];
     }
 }
+
