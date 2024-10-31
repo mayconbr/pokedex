@@ -22,23 +22,31 @@ const tipoCores = {
 var modal = document.getElementById("modal");
 var close = document.getElementsByClassName("close")[0];
 
+var modalApresentacao = document.getElementById("modalApresentacao");
+var closeBtn = document.getElementsByClassName("modalapresentacao-close")[0];
+
 const limit = 10;
 var offset = 0;
-
 
 // Chama as funções ao carregar a página
 populateTypeSelect();
 populateHabitatSelect();
 buscarPokemonsPaginados();
 
-if(offset == 0){
+modalApresentacao.style.display = "block";
+
+if (offset == 0) {
     var btPg = document.getElementById('anterior')
     btPg.style.display = 'none';
 }
 
+
+// -------------------------------------- Funções de interação com html
+
+
 function openModal(pokemon) {
     modal.style.display = "block";
-     createModal(pokemon);
+    createModal(pokemon);
 }
 
 close.onclick = function () {
@@ -51,21 +59,107 @@ window.onclick = function (event) {
     }
 }
 
+closeBtn.onclick = function () {
+    modalApresentacao.style.display = "none";
+}
+
+window.onclick = function (event) {
+    if (event.target == modal) {
+        modalApresentacao.style.display = "none";
+    }
+}
+
+function loading() {
+    const loadingScreen = document.getElementById("loading-screen");
+
+    if (loadingScreen.classList.contains("hidden")) {
+        loadingScreen.classList.remove("hidden");
+    } else {
+        loadingScreen.classList.add("hidden");
+    }
+}
+
+function callLoading() {
+    loading();
+
+    setTimeout(() => {
+        loading();
+    }, 1000);
+}
+
+function paginaAnterior() {
+    offset = offset - limit;
+
+    if (offset == 0) {
+        var btPg = document.getElementById('anterior')
+        btPg.style.display = 'none';
+    }
+
+    callLoading();
+    buscarPokemonsPaginados();
+
+}
+
+function proximaPagina() {
+    offset = offset + limit;
+    btPg.style.display = 'block';
+    callLoading();
+    buscarPokemonsPaginados();
+}
+
+
+function apagarTodosOsCartoes() {
+    const container = document.getElementById("cont-card");
+    container.innerHTML = "";
+}
+
+//Preenche o select de type
+async function populateTypeSelect() {
+    const typeSelect = document.getElementById("typeSelect");
+    typeSelect.innerHTML = '<option value="">Tipos</option>';
+    const response = await fetch("https://pokeapi.co/api/v2/type");
+    const data = await response.json();
+    data.results.forEach(type => {
+        const option = document.createElement("option");
+        option.value = type.url.split("/").slice(-2, -1)[0]; // Define o ID do tipo
+        option.textContent = type.name;
+        typeSelect.appendChild(option);
+    });
+}
+
+// Preenche o select de habitat
+async function populateHabitatSelect() {
+    const habitatSelect = document.getElementById("habitatSelect");
+    habitatSelect.innerHTML = '<option value="">Habitats</option>';
+    const response = await fetch("https://pokeapi.co/api/v2/pokemon-habitat");
+    const data = await response.json();
+    data.results.forEach(habitat => {
+        const option = document.createElement("option");
+        option.value = habitat.url.split("/").slice(-2, -1)[0]; // Define o ID do habitat
+        option.textContent = habitat.name;
+        habitatSelect.appendChild(option);
+    });
+}
+
+
+// -------------------------------------- Funções de interação com a pokeapi
+
+
 async function createModal(pokemon) {
     endpoint = 'pokemon'
     const data = await PokeApi(endpoint, pokemon);
 
-    nomePokemon = data.name; 
+    nomePokemon = data.name;
 
     h1 = document.getElementById("namePokemonModal");
-    h1.textContent  = nomePokemon.charAt(0).toUpperCase() + nomePokemon.slice(1);
+    h1.textContent = nomePokemon.charAt(0).toUpperCase() + nomePokemon.slice(1);
 
     IdPokemon = document.getElementById('numberPokemonModal');
     let IdComZeros = pokemon.toString().padStart(3, '0');
     IdPokemon.textContent = '#' + IdComZeros;
 
     const tipos = data.types.map(tipoInfo => tipoInfo.type.name);
-    const corDoTipo = tipoCores[tipos[0]] || "#A8A878"; 
+    const corDoTipo = tipoCores[tipos[0]] || "#A8A878";
     var ColorModal = document.getElementById('ColorModal');
     var ContentInfo = document.getElementById('ContentInfo');
 
@@ -79,51 +173,51 @@ async function createModal(pokemon) {
     // Cria um span para cada tipo
     tipos.forEach(tipos => {
         const tipoElemento = document.createElement("span");
-        tipoElemento.classList.add("card-type-item", tipos); 
+        tipoElemento.classList.add("card-type-item", tipos);
         tipoElemento.textContent = tipos;
 
         cardTypeContainer.appendChild(tipoElemento);
     });
 
 
-//cria array status
-const statusBase = data.stats.map(statInfo => ({
-    stat: statInfo.stat.name.charAt(0).toUpperCase() + statInfo.stat.name.slice(1),
-    valor: statInfo.base_stat
-}));
+    //cria array status
+    const statusBase = data.stats.map(statInfo => ({
+        stat: statInfo.stat.name.charAt(0).toUpperCase() + statInfo.stat.name.slice(1),
+        valor: statInfo.base_stat
+    }));
 
-const aboutModal = document.querySelector('.stats');  
+    const aboutModal = document.querySelector('.stats');
 
-// apaga stats
-aboutModal.querySelectorAll('p').forEach(p => p.remove());
-statusBase.forEach(({ stat, valor }) => {
-    const p = document.createElement('p');
-    p.textContent = `${stat}: ${valor}`;
-    aboutModal.appendChild(p);
-});
+    // apaga stats
+    aboutModal.querySelectorAll('p').forEach(p => p.remove());
+    statusBase.forEach(({ stat, valor }) => {
+        const p = document.createElement('p');
+        p.textContent = `${stat}: ${valor}`;
+        aboutModal.appendChild(p);
+    });
 
-// cria array de habilidades
-const habilidades = data.abilities.map(abilityInfo => ({
-    habilidade: abilityInfo.ability.name.charAt(0).toUpperCase() + abilityInfo.ability.name.slice(1)
-}));
+    // cria array de habilidades
+    const habilidades = data.abilities.map(abilityInfo => ({
+        habilidade: abilityInfo.ability.name.charAt(0).toUpperCase() + abilityInfo.ability.name.slice(1)
+    }));
 
-const abilitiesContainer = document.querySelector('.container-habities div');
+    const abilitiesContainer = document.querySelector('.container-habities div');
 
-// apaga habilidades
-abilitiesContainer.querySelectorAll('p').forEach(p => p.remove());
+    // apaga habilidades
+    abilitiesContainer.querySelectorAll('p').forEach(p => p.remove());
 
-habilidades.forEach(({ habilidade }) => {
-    const p = document.createElement('p');
-    p.textContent = habilidade;
-    abilitiesContainer.appendChild(p);
-});
+    habilidades.forEach(({ habilidade }) => {
+        const p = document.createElement('p');
+        p.textContent = habilidade;
+        abilitiesContainer.appendChild(p);
+    });
 
-//imagem
-const imgUrl = data.sprites.front_default;
-const imgElement = document.querySelector('img#pokemonImageModal');
+    //imagem
+    const imgUrl = data.sprites.front_default;
+    const imgElement = document.querySelector('img#pokemonImageModal');
 
-imgElement.src = imgUrl;
-imgElement.alt = `${pokemon} image`
+    imgElement.src = imgUrl;
+    imgElement.alt = `${pokemon} image`
 
 }
 
@@ -189,7 +283,7 @@ async function buscarPokemonsPaginados() {
             const id = detalhesData.id;
 
             // Define a cor do cartão 
-            const corDoTipo = tipoCores[tipos[0]] || "#A8A878"; 
+            const corDoTipo = tipoCores[tipos[0]] || "#A8A878";
 
             // Cria card
             const card = document.createElement("div");
@@ -244,33 +338,6 @@ async function buscarPokemonsPaginados() {
     } catch (error) {
         alert.error("Erro ao buscar Pokémons:", error);
     }
-}
-
-
-function paginaAnterior() {
-    offset = offset - limit;
-
-    if(offset == 0){
-        var btPg = document.getElementById('anterior')
-        btPg.style.display = 'none';
-    }
-
-    callLoading();
-    buscarPokemonsPaginados();
-
-}
-
-function proximaPagina() {
-    offset = offset + limit;
-    btPg.style.display = 'block';
-    callLoading();
-    buscarPokemonsPaginados();
-}
-
-
-function apagarTodosOsCartoes() {
-    const container = document.getElementById("cont-card");
-    container.innerHTML = "";
 }
 
 async function buscarPokemonsPorIds(ids) {
@@ -341,34 +408,6 @@ async function buscarPokemonsPorIds(ids) {
     }
 }
 
-//Preenche o select de type
-async function populateTypeSelect() {
-    const typeSelect = document.getElementById("typeSelect");
-    typeSelect.innerHTML = '<option value="">Tipos</option>';
-    const response = await fetch("https://pokeapi.co/api/v2/type");
-    const data = await response.json();
-    data.results.forEach(type => {
-        const option = document.createElement("option");
-        option.value = type.url.split("/").slice(-2, -1)[0]; // Define o ID do tipo
-        option.textContent = type.name;
-        typeSelect.appendChild(option);
-    });
-}
-
-// Preenche o select de habitat
-async function populateHabitatSelect() {
-    const habitatSelect = document.getElementById("habitatSelect");
-    habitatSelect.innerHTML = '<option value="">Habitats</option>';
-    const response = await fetch("https://pokeapi.co/api/v2/pokemon-habitat");
-    const data = await response.json();
-    data.results.forEach(habitat => {
-        const option = document.createElement("option");
-        option.value = habitat.url.split("/").slice(-2, -1)[0]; // Define o ID do habitat
-        option.textContent = habitat.name;
-        habitatSelect.appendChild(option);
-    });
-}
-
 async function fetchFilteredPokemonIDs() {
 
     callLoading();
@@ -402,7 +441,7 @@ async function fetchFilteredPokemonIDs() {
             }
             const typeData = await typeResponse.json();
             const pokemonByType = typeData.pokemon.map(pokemonEntry => pokemonEntry.pokemon);
-            
+
             // Se há uma pesquisa de texto, mantemos apenas os Pokémon que coincidem com ambos
             if (query) {
                 allPokemons = allPokemons.filter(pokemon =>
@@ -442,8 +481,8 @@ async function fetchFilteredPokemonIDs() {
 
         buscarPokemonsPorIds(pokemonIDs); // Chama a função para processar os IDs dos Pokémon encontrados
 
-         var btPag = document.getElementById("btPag");
-         btPag.style.display = 'none';
+        var btPag = document.getElementById("btPag");
+        btPag.style.display = 'none';
 
         return pokemonIDs;
 
@@ -452,39 +491,3 @@ async function fetchFilteredPokemonIDs() {
         return [];
     }
 }
-
-
-
-var modalApresentacao = document.getElementById("modalApresentacao");
-modalApresentacao.style.display = "block";
-    var closeBtn = document.getElementsByClassName("modalapresentacao-close")[0];
-
-    closeBtn.onclick = function() {
-        modalApresentacao.style.display = "none";
-    }
-
-    window.onclick = function(event) {
-      if (event.target == modal) {
-        modalApresentacao.style.display = "none";
-      }
-    }
-
-
-
-    function loading() {
-        const loadingScreen = document.getElementById("loading-screen");
-
-        if (loadingScreen.classList.contains("hidden")) {
-            loadingScreen.classList.remove("hidden");
-        } else {
-            loadingScreen.classList.add("hidden");
-        }
-    }
-
-    function callLoading() {
-        loading();
-    
-        setTimeout(() => {
-            loading();
-        }, 1000);
-    }
