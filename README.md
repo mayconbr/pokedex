@@ -26,4 +26,5 @@ Nenhum pré-requisito especial é necessário, pois o projeto é estático. Apen
 
 - Adicionar mais informações detalhadas sobre os Pokémon.
 -Usar alguma tecnologia para fazer o roteamento
+-Projeto em faze de migração 
 
